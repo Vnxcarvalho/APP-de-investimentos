@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Plus, Search, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Search, TrendingUp, TrendingDown } from 'lucide-react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { AppLayout } from '../components/Layout/AppLayout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
 import { AssetBadge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { OperationForm } from '../components/OperationForm';
