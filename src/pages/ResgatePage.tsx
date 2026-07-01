@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Layers, FileText, TrendingUp, TrendingDown } from 'lucide-react';
+import { Layers, FileText, TrendingUp, TrendingDown, CheckCircle2 } from 'lucide-react';
 import { AppLayout } from '../components/Layout/AppLayout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -14,11 +14,14 @@ const fmtPct = (v: number) =>
 const parseNum = (s: string) => parseFloat(s.replace(',', '.')) || 0;
 
 export function ResgatePage() {
-  const { assetsWithQuotes, loading } = usePortfolio();
+  const { assetsWithQuotes, loading, addOp } = usePortfolio();
   const [resgates, setResgates] = useState<Record<string, string>>({});
   const [selecionados, setSelecionados] = useState<Record<string, boolean>>({});
   const [metaEntrada, setMetaEntrada] = useState('');
   const [extratoOpen, setExtratoOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState('');
+  const [confirmado, setConfirmado] = useState(false);
 
   const ativos = assetsWithQuotes.filter(a => a.totalInvested > 0);
 
@@ -51,6 +54,50 @@ export function ResgatePage() {
   const limparTudo = () => {
     setResgates({});
     setSelecionados({});
+    setConfirmado(false);
+    setConfirmError('');
+  };
+
+  const itensConfirmar = ativos.filter(a => selecionados[a.id] && parseNum(resgates[a.id] ?? '0') > 0);
+
+  const handleConfirmar = async () => {
+    setConfirmError('');
+    setConfirming(true);
+    try {
+      for (const a of itensConfirmar) {
+        const valor = parseNum(resgates[a.id] ?? '0');
+        const precoAtual = (a.currentPrice && a.currentPrice > 0) ? a.currentPrice : a.averagePrice;
+        const quantidade = Math.min(valor / precoAtual, a.quantity);
+        await addOp({
+          ticker: a.ticker,
+          assetType: a.type,
+          type: 'venda',
+          quantity: quantidade,
+          price: precoAtual,
+          date: new Date(),
+          totalValue: valor,
+          notes: 'Resgate',
+        });
+      }
+      setConfirmado(true);
+      setExtratoOpen(true);
+    } catch (err: any) {
+      const code: string = err?.code ?? '';
+      if (code === 'permission-denied') {
+        setConfirmError('Sem permissão para salvar. Verifique as regras do Firestore no Firebase Console.');
+      } else if (code === 'unavailable' || code === 'network-request-failed') {
+        setConfirmError('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else {
+        setConfirmError(`Erro ao confirmar resgate (${code || err?.message || 'desconhecido'}).`);
+      }
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const handleFecharExtrato = () => {
+    setExtratoOpen(false);
+    if (confirmado) limparTudo();
   };
 
   return (
@@ -196,17 +243,40 @@ export function ResgatePage() {
               </div>
             )}
 
-            <Button variant="secondary" onClick={() => setExtratoOpen(true)}>
-              <FileText size={16} />
-              Ver extrato de resgate
-            </Button>
+            {confirmError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">
+                {confirmError}
+              </p>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                onClick={handleConfirmar}
+                loading={confirming}
+                disabled={itensConfirmar.length === 0}
+              >
+                <CheckCircle2 size={16} />
+                Confirmar resgate
+              </Button>
+              <Button variant="secondary" onClick={() => setExtratoOpen(true)}>
+                <FileText size={16} />
+                Ver extrato de resgate
+              </Button>
+            </div>
           </Card>
         )}
       </div>
 
       {/* Modal extrato */}
-      <Modal open={extratoOpen} onClose={() => setExtratoOpen(false)} title="Extrato de Resgate" size="lg">
+      <Modal open={extratoOpen} onClose={handleFecharExtrato} title="Extrato de Resgate" size="lg">
         <div className="space-y-4">
+          {confirmado && (
+            <div className="flex items-center gap-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+              <CheckCircle2 size={16} />
+              Resgate confirmado e registrado nas operações.
+            </div>
+          )}
+
           <p className="text-sm text-gray-400">
             Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
           </p>
