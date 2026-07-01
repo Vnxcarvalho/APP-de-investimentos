@@ -16,14 +16,19 @@ const parseNum = (s: string) => parseFloat(s.replace(',', '.')) || 0;
 export function ResgatePage() {
   const { assetsWithQuotes, loading } = usePortfolio();
   const [resgates, setResgates] = useState<Record<string, string>>({});
+  const [selecionados, setSelecionados] = useState<Record<string, boolean>>({});
   const [metaEntrada, setMetaEntrada] = useState('');
   const [extratoOpen, setExtratoOpen] = useState(false);
 
   const ativos = assetsWithQuotes.filter(a => a.totalInvested > 0);
 
   const totalResgate = useMemo(
-    () => Object.values(resgates).reduce((s, v) => s + parseNum(v), 0),
-    [resgates]
+    () =>
+      Object.entries(resgates).reduce(
+        (s, [id, v]) => (selecionados[id] ? s + parseNum(v) : s),
+        0
+      ),
+    [resgates, selecionados]
   );
 
   const meta = parseNum(metaEntrada);
@@ -35,7 +40,18 @@ export function ResgatePage() {
     setResgates(prev => ({ ...prev, [id]: valor }));
   };
 
-  const limparTudo = () => setResgates({});
+  const toggleSelecionado = (id: string) => {
+    setSelecionados(prev => {
+      const next = { ...prev, [id]: !prev[id] };
+      if (!next[id]) setResgates(r => ({ ...r, [id]: '' }));
+      return next;
+    });
+  };
+
+  const limparTudo = () => {
+    setResgates({});
+    setSelecionados({});
+  };
 
   return (
     <AppLayout>
@@ -73,7 +89,7 @@ export function ResgatePage() {
               </div>
               <h2 className="text-base font-bold text-gray-900">Ativos disponíveis</h2>
             </div>
-            {Object.keys(resgates).some(k => parseNum(resgates[k]) > 0) && (
+            {(Object.values(selecionados).some(Boolean) || Object.keys(resgates).some(k => parseNum(resgates[k]) > 0)) && (
               <button
                 onClick={limparTudo}
                 className="text-xs text-gray-400 hover:text-red-500 transition-colors"
@@ -96,12 +112,23 @@ export function ResgatePage() {
                 const retorno = valorAtual - a.totalInvested;
                 const temCotacao = a.currentValue !== undefined && a.currentValue > 0 && a.currentValue !== a.totalInvested;
 
+                const selecionado = !!selecionados[a.id];
+
                 return (
                   <div
                     key={a.id}
-                    className="flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
+                    className={`flex items-center gap-4 p-4 border rounded-xl transition-colors ${
+                      selecionado ? 'border-primary-200 bg-primary-50/30' : 'border-gray-100 hover:bg-gray-50'
+                    }`}
                   >
-                    <div className="flex-1 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={selecionado}
+                      onChange={() => toggleSelecionado(a.id)}
+                      className="w-4 h-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500 shrink-0"
+                    />
+
+                    <div className={`flex-1 min-w-0 ${selecionado ? '' : 'opacity-50'}`}>
                       <p className="font-bold text-sm">{a.ticker}</p>
                       <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                         <span className="text-xs text-gray-500">
@@ -133,6 +160,7 @@ export function ResgatePage() {
                         min="0"
                         max={String(valorAtual)}
                         step="any"
+                        disabled={!selecionado}
                       />
                     </div>
                   </div>
