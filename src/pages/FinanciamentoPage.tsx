@@ -8,7 +8,6 @@ import { calcularFinanciamentoPrice, ResultadoFinanciamento } from '../utils/fin
 import { formatCurrency } from '../utils/format';
 
 const fmt = (v: number) => formatCurrency(v);
-const fmtPct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + '%';
 const parseNum = (s: string) => parseFloat(s.replace(',', '.')) || 0;
 
 // ─── Seção 1: Calculadora de Financiamento ───────────────────────────────────

@@ -43,7 +43,7 @@ export function AllocationChart({ assets }: AllocationChartProps) {
           ))}
         </Pie>
         <Tooltip
-          formatter={(value: number) => [formatCurrency(value), 'Valor']}
+          formatter={(value) => [formatCurrency(Number(value ?? 0)), 'Valor']}
           contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
         />
         <Legend

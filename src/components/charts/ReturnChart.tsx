@@ -37,8 +37,8 @@ export function ReturnChart({ assets }: ReturnChartProps) {
           width={80}
         />
         <Tooltip
-          formatter={(value: number, _: string, props: { payload?: { returnPercent: number } }) => [
-            `${formatCurrency(value)} (${props.payload?.returnPercent?.toFixed(2)}%)`,
+          formatter={(value, _name, props) => [
+            `${formatCurrency(Number(value ?? 0))} (${(props as any).payload?.returnPercent?.toFixed(2)}%)`,
             'Retorno',
           ]}
           contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
