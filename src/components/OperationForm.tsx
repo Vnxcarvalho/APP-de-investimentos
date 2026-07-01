@@ -1,9 +1,8 @@
-import { useState, FormEvent, useEffect, useRef } from 'react';
+import { useState, FormEvent } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { AssetType, ASSET_TYPE_LABELS } from '../types';
-import { searchTicker } from '../services/stockApi';
 
 interface OperationFormProps {
   onClose: () => void;
@@ -12,41 +11,26 @@ interface OperationFormProps {
 export function OperationForm({ onClose }: OperationFormProps) {
   const { addOp } = usePortfolio();
   const [loading, setLoading] = useState(false);
-  const [ticker, setTicker] = useState('');
+  const [error, setError] = useState('');
+  const [name, setName] = useState('');
   const [assetType, setAssetType] = useState<AssetType>('acao');
   const [opType, setOpType] = useState<'compra' | 'venda'>('compra');
   const [quantity, setQuantity] = useState('');
   const [price, setPrice] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
-  const [suggestions, setSuggestions] = useState<{ ticker: string; name: string }[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const suggestRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      if (ticker.length >= 2 && (assetType === 'acao' || assetType === 'fii')) {
-        const results = await searchTicker(ticker.toUpperCase());
-        setSuggestions(results);
-        setShowSuggestions(results.length > 0);
-      } else {
-        setSuggestions([]);
-        setShowSuggestions(false);
-      }
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [ticker, assetType]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const qty = parseFloat(quantity.replace(',', '.'));
     const prc = parseFloat(price.replace(',', '.'));
-    if (!ticker || isNaN(qty) || isNaN(prc) || qty <= 0 || prc <= 0) return;
+    if (!name.trim() || isNaN(qty) || isNaN(prc) || qty <= 0 || prc <= 0) return;
 
+    setError('');
     setLoading(true);
     try {
       await addOp({
-        ticker: ticker.toUpperCase(),
+        ticker: name.trim().toUpperCase(),
         assetType,
         type: opType,
         quantity: qty,
@@ -56,6 +40,15 @@ export function OperationForm({ onClose }: OperationFormProps) {
         notes: notes || undefined,
       });
       onClose();
+    } catch (err: any) {
+      const code: string = err?.code ?? '';
+      if (code === 'permission-denied') {
+        setError('Sem permissão para salvar. Verifique as regras do Firestore no Firebase Console.');
+      } else if (code === 'unavailable' || code === 'network-request-failed') {
+        setError('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else {
+        setError(`Erro ao registrar operação (${code || err?.message || 'desconhecido'}).`);
+      }
     } finally {
       setLoading(false);
     }
@@ -100,38 +93,13 @@ export function OperationForm({ onClose }: OperationFormProps) {
         </div>
       </div>
 
-      <div className="relative">
-        <Input
-          label="Ticker / Código"
-          value={ticker}
-          onChange={e => setTicker(e.target.value.toUpperCase())}
-          placeholder="Ex: PETR4, MXRF11, Tesouro Selic"
-          required
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-          onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-        />
-        {showSuggestions && (
-          <div
-            ref={suggestRef}
-            className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
-          >
-            {suggestions.map(s => (
-              <button
-                key={s.ticker}
-                type="button"
-                className="w-full px-4 py-2.5 text-left hover:bg-gray-50 flex items-center gap-3"
-                onClick={() => {
-                  setTicker(s.ticker);
-                  setShowSuggestions(false);
-                }}
-              >
-                <span className="font-bold text-sm">{s.ticker}</span>
-                <span className="text-xs text-gray-500 truncate">{s.name}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <Input
+        label="Nome do Ativo"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        placeholder="Ex: Tesouro Selic 2029, PETR4, Bitcoin"
+        required
+      />
 
       <div className="grid grid-cols-2 gap-3">
         <Input
@@ -145,13 +113,14 @@ export function OperationForm({ onClose }: OperationFormProps) {
           required
         />
         <Input
-          label="Preço Unitário (R$)"
+          label="Preço Unitário"
           type="number"
           value={price}
           onChange={e => setPrice(e.target.value)}
           placeholder="0,00"
           min="0"
           step="any"
+          prefix="R$"
           required
         />
       </div>
@@ -181,6 +150,12 @@ export function OperationForm({ onClose }: OperationFormProps) {
         onChange={e => setNotes(e.target.value)}
         placeholder="Ex: reinvestimento de dividendos"
       />
+
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          {error}
+        </p>
+      )}
 
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>

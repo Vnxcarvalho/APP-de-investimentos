@@ -6,6 +6,8 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { PortfolioPage } from './pages/PortfolioPage';
 import { OperationsPage } from './pages/OperationsPage';
+import { FinanciamentoPage } from './pages/FinanciamentoPage';
+import { ResgatePage } from './pages/ResgatePage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -50,6 +52,26 @@ function AppRoutes() {
           <PrivateRoute>
             <PortfolioProvider>
               <OperationsPage />
+            </PortfolioProvider>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/financiamento"
+        element={
+          <PrivateRoute>
+            <PortfolioProvider>
+              <FinanciamentoPage />
+            </PortfolioProvider>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/resgate"
+        element={
+          <PrivateRoute>
+            <PortfolioProvider>
+              <ResgatePage />
             </PortfolioProvider>
           </PrivateRoute>
         }

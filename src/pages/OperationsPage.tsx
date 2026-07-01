@@ -53,7 +53,7 @@ export function OperationsPage() {
               <thead>
                 <tr className="text-left text-gray-500 border-b border-gray-100">
                   <th className="pb-3 font-medium">Tipo</th>
-                  <th className="pb-3 font-medium">Ticker</th>
+                  <th className="pb-3 font-medium">Ativo</th>
                   <th className="pb-3 font-medium">Classe</th>
                   <th className="pb-3 font-medium">Data</th>
                   <th className="pb-3 font-medium">Qtd</th>

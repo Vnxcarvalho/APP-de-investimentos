@@ -59,10 +59,18 @@ export async function addOperation(
   op: Omit<Operation, 'id'>
 ): Promise<string> {
   const opRef = collection(db, 'users', userId, 'operations');
-  const docRef = await addDoc(opRef, {
-    ...op,
+  const docData: Record<string, unknown> = {
+    ticker: op.ticker,
+    assetType: op.assetType,
+    type: op.type,
+    quantity: op.quantity,
+    price: op.price,
     date: Timestamp.fromDate(op.date),
-  });
+    totalValue: op.totalValue,
+  };
+  if (op.notes !== undefined) docData.notes = op.notes;
+
+  const docRef = await addDoc(opRef, docData);
 
   await recalculateAsset(userId, op.ticker, op.assetType);
   return docRef.id;

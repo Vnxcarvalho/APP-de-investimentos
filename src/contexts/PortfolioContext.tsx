@@ -54,11 +54,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
   const assetsWithQuotes: AssetWithQuote[] = assets.map(a => {
     const q = quotes[a.ticker];
-    const currentPrice = q?.price ?? a.averagePrice;
+    const currentPrice = (q?.price && q.price > 0) ? q.price : a.averagePrice;
     const currentValue = currentPrice * a.quantity;
     const ret = currentValue - a.totalInvested;
     const retPct = a.totalInvested > 0 ? (ret / a.totalInvested) * 100 : 0;
-    return { ...a, currentPrice, currentValue, return: ret, returnPercent: retPct };
+    return { ...a, currentPrice, currentValue, return: ret, returnPercent: retPct, changePercent: q?.changePercent ?? 0 };
   });
 
   const totalInvested = assets.reduce((s, a) => s + a.totalInvested, 0);

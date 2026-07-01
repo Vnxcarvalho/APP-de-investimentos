@@ -14,6 +14,29 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const getErrorMessage = (code: string) => {
+    switch (code) {
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+      case 'auth/user-not-found':
+        return 'Email ou senha inválidos.';
+      case 'auth/operation-not-allowed':
+        return 'Login por email não está habilitado. Ative no Firebase Console → Authentication → Sign-in method.';
+      case 'auth/too-many-requests':
+        return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+      case 'auth/network-request-failed':
+        return 'Erro de conexão. Verifique sua internet.';
+      case 'auth/unauthorized-domain':
+        return 'Domínio não autorizado no Firebase Console → Authentication → Settings → Authorized domains.';
+      case 'auth/popup-blocked':
+        return 'Popup bloqueado pelo navegador. Permita popups para este site.';
+      case 'auth/popup-closed-by-user':
+        return 'Login cancelado.';
+      default:
+        return `Erro inesperado (${code}). Tente novamente.`;
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
@@ -21,8 +44,8 @@ export function LoginPage() {
     try {
       await signIn(email, password);
       navigate('/');
-    } catch {
-      setError('Email ou senha inválidos.');
+    } catch (err: any) {
+      setError(getErrorMessage(err?.code ?? ''));
     } finally {
       setLoading(false);
     }
@@ -33,8 +56,8 @@ export function LoginPage() {
     try {
       await signInWithGoogle();
       navigate('/');
-    } catch {
-      setError('Erro ao entrar com Google.');
+    } catch (err: any) {
+      setError(getErrorMessage(err?.code ?? ''));
     } finally {
       setGoogleLoading(false);
     }

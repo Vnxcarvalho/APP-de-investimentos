@@ -31,8 +31,17 @@ export function RegisterPage() {
     try {
       await signUp(email, password);
       navigate('/');
-    } catch {
-      setError('Erro ao criar conta. Verifique se o email já está em uso.');
+    } catch (err: any) {
+      const code: string = err?.code ?? '';
+      if (code === 'auth/email-already-in-use') {
+        setError('Este email já está cadastrado. Tente fazer login.');
+      } else if (code === 'auth/operation-not-allowed') {
+        setError('Cadastro por email não está habilitado. Ative no Firebase Console → Authentication → Sign-in method.');
+      } else if (code === 'auth/network-request-failed') {
+        setError('Erro de conexão. Verifique sua internet.');
+      } else {
+        setError(`Erro ao criar conta (${code || 'desconhecido'}). Tente novamente.`);
+      }
     } finally {
       setLoading(false);
     }

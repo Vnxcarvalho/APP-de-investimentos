@@ -126,7 +126,13 @@ export function DashboardPage() {
                       <td className="py-3 text-gray-600">{formatCurrency(a.averagePrice)}</td>
                       <td className="py-3 font-medium">{formatCurrency(q.currentPrice ?? 0)}</td>
                       <td className="py-3 text-right">
-                        <span className="text-gray-400 text-xs">—</span>
+                        {(a as any).changePercent != null && (a as any).changePercent !== 0 ? (
+                          <span className={`font-medium text-sm ${(a as any).changePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {(a as any).changePercent >= 0 ? '+' : ''}{((a as any).changePercent as number).toFixed(2)}%
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
                       </td>
                       <td className="py-3 text-right">
                         <span className={`font-medium ${(q.returnPercent ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
