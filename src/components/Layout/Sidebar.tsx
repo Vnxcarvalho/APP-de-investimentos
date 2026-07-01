@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, ArrowLeftRight, LogOut, TrendingUp, Home, Banknote } from 'lucide-react';
+import { LayoutDashboard, Briefcase, ArrowLeftRight, LogOut, TrendingUp, Home, Banknote, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/operacoes', icon: ArrowLeftRight, label: 'Operações' },
   { to: '/financiamento', icon: Home, label: 'Financiamento' },
   { to: '/resgate', icon: Banknote, label: 'Resgate' },
+  { to: '/extratos', icon: FileText, label: 'Extratos' },
 ];
 
 export function Sidebar() {
